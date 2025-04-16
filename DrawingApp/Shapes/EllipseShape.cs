@@ -1,8 +1,9 @@
-﻿using System;
-using System.Windows;
-using System.Windows.Controls;
+﻿using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using System.Windows;
+using System;
+using System.Collections.Generic;
 
 namespace DrawingApp
 {
@@ -10,6 +11,21 @@ namespace DrawingApp
     {
         public Point TopLeft { get; set; }
         public Point BottomRight { get; set; }
+
+        public override void Initialize(Point startPoint)
+        {
+            TopLeft = startPoint;
+            BottomRight = startPoint;
+        }
+
+        public override void Update(Point currentPoint)
+        {
+            BottomRight = currentPoint;
+        }
+
+        public override void FinalizeShape()
+        {
+        }
 
         public override UIElement Draw()
         {
@@ -26,18 +42,16 @@ namespace DrawingApp
                 StrokeThickness = Thickness,
                 Fill = new SolidColorBrush(FillColor)
             };
-
             Canvas.SetLeft(ellipse, left);
             Canvas.SetTop(ellipse, top);
-
             return ellipse;
         }
 
-        public override void SetProperties(double thickness, Color strokeColor, Color fillColor)
+        public override bool IsMultiPointShape => false;
+
+        public override IEnumerable<UIElement> DrawPreview(Point previewPoint, double thickness, Color strokeColor)
         {
-            Thickness = thickness;
-            StrokeColor = strokeColor;
-            FillColor = fillColor;
+            return new List<UIElement>(); // Эллипсу не нужен предпросмотр
         }
     }
 }

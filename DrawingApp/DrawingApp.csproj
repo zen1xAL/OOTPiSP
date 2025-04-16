@@ -55,12 +55,15 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
-    <Compile Include="EllipseShape.cs" />
-    <Compile Include="LineShape.cs" />
-    <Compile Include="PolygonShape.cs" />
-    <Compile Include="PolylineShape.cs" />
-    <Compile Include="RectangleShape.cs" />
-    <Compile Include="Shape.cs" />
+    <Compile Include="ColorManager\ColorManager.cs" />
+    <Compile Include="Shapes\EllipseShape.cs" />
+    <Compile Include="Shapes\LineShape.cs" />
+    <Compile Include="Shapes\PolygonShape.cs" />
+    <Compile Include="Shapes\PolylineShape.cs" />
+    <Compile Include="Shapes\RectangleShape.cs" />
+    <Compile Include="Shapes\Shape.cs" />
+    <Compile Include="ShapeFactory\ShapeFactory.cs" />
+    <Compile Include="Undo_Redo\UndoRedoManager.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
@@ -100,5 +103,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

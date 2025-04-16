@@ -10,17 +10,38 @@ namespace DrawingApp
 {
     public partial class MainWindow : Window
     {
+        
         private List<Shape> shapes = new List<Shape>();
         private Shape currentShape;
         private Point startPoint;
-        private Stack<Shape> undoStack = new Stack<Shape>();
-        private Stack<Shape> redoStack = new Stack<Shape>();
         private string currentMode = "";
         private bool isDrawing = false;
+        private UndoRedoManager undoRedoManager;
 
         public MainWindow()
         {
             InitializeComponent();
+            undoRedoManager = new UndoRedoManager(shapes);
+
+            // Загружаем плагины из директории "Plugins"
+            string pluginsDirectory = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Plugins");
+            ShapeFactory.LoadPlugins(pluginsDirectory);
+
+            // Очищаем ShapeSelector перед добавлением новых элементов
+            ShapeSelector.Items.Clear();
+
+            // Заполняем ShapeSelector доступными фигурами
+            foreach (var shapeName in ShapeFactory.GetRegisteredShapes())
+            {
+                ShapeSelector.Items.Add(new ComboBoxItem { Content = shapeName });
+            }
+
+            // Устанавливаем первую фигуру по умолчанию, если список не пуст
+            if (ShapeSelector.Items.Count > 0)
+            {
+                ShapeSelector.SelectedIndex = 0;
+            }
+
             DrawingCanvas.MouseDown += DrawingCanvas_MouseDown;
             DrawingCanvas.MouseMove += DrawingCanvas_MouseMove;
             DrawingCanvas.MouseUp += DrawingCanvas_MouseUp;
@@ -28,23 +49,32 @@ namespace DrawingApp
             UndoButton.Click += UndoButton_Click;
             RedoButton.Click += RedoButton_Click;
             ShapeSelector.SelectionChanged += ShapeSelector_SelectionChanged;
-            this.KeyDown += MainWindow_KeyDown; // Привязываем событие к окну
         }
 
         private void ShapeSelector_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (isDrawing && currentShape != null)
             {
-                FinalizeShape();
+                // Отменяем текущее рисование при смене фигуры
                 isDrawing = false;
+                currentShape = null;
+                DrawingCanvas.ReleaseMouseCapture(); // Освобождаем захват
+                RedrawCanvas();
             }
         }
 
+
         private void DrawingCanvas_MouseDown(object sender, MouseButtonEventArgs e)
         {
+            // Игнорируем, если не левая кнопка
+            if (e.LeftButton != MouseButtonState.Pressed) return;
+
+            // Захватываем фокус, чтобы обработка KeyDown работала надежнее
+            DrawingCanvas.Focus();
+
             Point clickPoint = e.GetPosition(DrawingCanvas);
 
-            if (!isDrawing || currentMode == "Polygon" || currentMode == "Polyline")
+            if (!isDrawing || currentShape?.IsMultiPointShape == true)
             {
                 startPoint = clickPoint;
                 string selectedShape = (ShapeSelector.SelectedItem as ComboBoxItem)?.Content.ToString();
@@ -55,98 +85,142 @@ namespace DrawingApp
                 }
 
                 currentMode = selectedShape;
-                isDrawing = true;
 
-                if (selectedShape == "Polygon" || selectedShape == "Polyline")
+                bool justStartedDrawing = false; // Флаг, чтобы захватить мышь один раз
+
+                // Если начинаем новую фигуру ИЛИ добавляем точку к многоточечной
+                if (currentShape == null || !currentShape.IsMultiPointShape)
                 {
-                    if (currentShape == null || !IsPolygonOrPolyline(currentShape))
+                    // Если не рисовали до этого, создаем новую фигуру
+                    if (!isDrawing)
                     {
                         currentShape = ShapeFactory.CreateShape(selectedShape);
+                        if (currentShape == null) // Проверка, если фабрика вернула null
+                        {
+                            isDrawing = false;
+                            return;
+                        }
+                        currentShape.Initialize(startPoint);
+                        isDrawing = true; // Начинаем рисование
+                        justStartedDrawing = true; // Помечаем, что только что начали
+                    }
+                    else if (currentShape != null && currentShape.IsMultiPointShape)
+                    {
+                        // Это случай, когда была активна многоточечная фигура,
+                        // но пользователь выбрал не-многоточечную.
+                        // Надо завершить старую и начать новую (или просто начать новую).
+                        currentShape = ShapeFactory.CreateShape(selectedShape);
+                        if (currentShape == null) { isDrawing = false; return; }
+                        currentShape.Initialize(startPoint);
+                        isDrawing = true; // Начинаем рисование новой
+                        justStartedDrawing = true; // Помечаем, что только что начали
+                    }
+                    else
+                    {
+                        isDrawing = false;
+                        currentShape = null;
+                        return;
+                    }
+                }
+                else if (currentShape.IsMultiPointShape)
+                {
+                    // Добавляем точку к существующей многоточечной фигуре
+                    if (!isDrawing) 
+                    {
+                        isDrawing = true;
+                        justStartedDrawing = true;
                     }
                     (currentShape as dynamic).Points.Add(startPoint);
                 }
-                else
-                {
-                    currentShape = ShapeFactory.CreateShape(selectedShape);
-                    if (currentShape is LineShape line)
-                    {
-                        line.Start = startPoint;
-                        line.End = startPoint;
-                    }
-                    else if (currentShape is RectangleShape rect)
-                    {
-                        rect.TopLeft = startPoint;
-                        rect.BottomRight = startPoint;
-                    }
-                    else if (currentShape is EllipseShape ellipse)
-                    {
-                        ellipse.TopLeft = startPoint;
-                        ellipse.BottomRight = startPoint;
-                    }
-                }
 
-                SetShapeProperties(currentShape);
-                RedrawCanvas();
+                // Применяем свойства и перерисовываем
+                if (isDrawing && currentShape != null)
+                {
+                    SetShapeProperties(currentShape);
+                    // Захватываем мышь, если только что начали рисование (новой фигуры или нового сегмента многоточечной)
+                    if (justStartedDrawing)
+                    {
+                        DrawingCanvas.CaptureMouse();
+                    }
+                    RedrawCanvas(); // Для многоточечных обновит добавленную точку
+                }
             }
         }
 
+
         private void DrawingCanvas_MouseMove(object sender, MouseEventArgs e)
         {
-            if (isDrawing && currentShape != null)
+           
+            if (isDrawing && currentShape != null) 
             {
                 Point currentPoint = e.GetPosition(DrawingCanvas);
+                currentShape.Update(currentPoint); // Обновляем геометрию фигуры (например, конечную точку для линии/прямоугольника)
+                SetShapeProperties(currentShape); // Обновляем свойства на случай их изменения во время рисования
 
-                if (currentMode == "Line" && currentShape is LineShape line)
+                if (currentShape.IsMultiPointShape)
                 {
-                    line.End = currentPoint;
-                    SetShapeProperties(currentShape);
-                    RedrawCanvas();
-                }
-                else if (currentMode == "Rectangle" && currentShape is RectangleShape rect)
-                {
-                    rect.BottomRight = currentPoint;
-                    SetShapeProperties(currentShape);
-                    RedrawCanvas();
-                }
-                else if (currentMode == "Ellipse" && currentShape is EllipseShape ellipse)
-                {
-                    ellipse.BottomRight = currentPoint;
-                    SetShapeProperties(currentShape);
-                    RedrawCanvas();
-                }
-                else if (currentMode == "Polygon" || currentMode == "Polyline")
-                {
+                    // Для многоточечных вызываем RedrawCanvasWithPreview,
+                    // который нарисует и фигуру, и линию предпросмотра до курсора
                     RedrawCanvasWithPreview(currentPoint);
+                }
+                else
+                {
+                    // Для обычных фигур просто перерисовываем все, включая обновленную текущую фигуру
+                    RedrawCanvas();
                 }
             }
         }
 
         private void DrawingCanvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (isDrawing && currentShape != null && (currentShape is LineShape || currentShape is RectangleShape || currentShape is EllipseShape))
+            // Реагируем только на отпускание ЛЕВОЙ кнопки и если мышь была захвачена ЭТИМ элементом
+            if (e.ChangedButton == MouseButton.Left && DrawingCanvas.IsMouseCaptured)
             {
+                DrawingCanvas.ReleaseMouseCapture();
+
+                // Завершаем только НЕ многоточечные фигуры левой кнопкой
+                if (isDrawing && currentShape != null && !currentShape.IsMultiPointShape)
+                {
+                    currentShape.Update(e.GetPosition(DrawingCanvas)); // Финальное обновление координат перед фиксацией
+                    currentShape.FinalizeShape(); 
+                    FinalizeShape();          
+                    isDrawing = false;       
+                }
+                
+            }
+            else if (e.ChangedButton == MouseButton.Left && isDrawing && currentShape != null && !currentShape.IsMultiPointShape)
+            {
+                // Если мышь не была захвачена, но мы вроде как рисовали не-многоточечную фигуру,
+                // то тоже завершаем ее
+                currentShape.Update(e.GetPosition(DrawingCanvas));
+                currentShape.FinalizeShape();
                 FinalizeShape();
                 isDrawing = false;
-            }
+                       }
         }
 
         private void DrawingCanvas_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
         {
-            if (isDrawing && currentShape != null && IsPolygonOrPolyline(currentShape))
+            if (isDrawing && currentShape != null && currentShape.IsMultiPointShape)
             {
-                FinalizeShape();
-                isDrawing = false;
-            }
-        }
-
-        private void MainWindow_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (isDrawing && e.Key == Key.Escape)
-            {
-                currentShape = null;
-                isDrawing = false;
-                RedrawCanvas();
-                e.Handled = true; // Помечаем событие как обработанное
+                bool canFinalize = true;
+         
+                if (currentShape is PolylineShape poly && poly.Points.Count < 2)
+                {
+                    canFinalize = false; // Не завершать ломаную линию из одной точки
+                }
+               
+                if (canFinalize)
+                {
+                    currentShape.FinalizeShape();
+                    FinalizeShape();
+                    isDrawing = false;
+                  
+                    if (DrawingCanvas.IsMouseCaptured)
+                    {
+                        DrawingCanvas.ReleaseMouseCapture();
+                    }
+                }
             }
         }
 
@@ -155,8 +229,10 @@ namespace DrawingApp
             double thickness = ThicknessSlider.Value;
             string strokeColorName = (ColorSelector.SelectedItem as ComboBoxItem)?.Content.ToString();
             string fillColorName = (FillColorSelector.SelectedItem as ComboBoxItem)?.Content.ToString();
-            Color strokeColor = GetColorFromName(strokeColorName);
-            Color fillColor = fillColorName == "None" ? Colors.Transparent : GetColorFromName(fillColorName);
+            Color strokeColor = ColorManager.GetColorFromName(strokeColorName);
+            Color fillColor = ColorManager.GetColorFromName(fillColorName);
+            
+            // Устанавливаем свойства текущей фигуры
             shape.SetProperties(thickness, strokeColor, fillColor);
         }
 
@@ -165,9 +241,7 @@ namespace DrawingApp
             if (currentShape == null) return;
 
             SetShapeProperties(currentShape);
-            shapes.Add(currentShape);
-            undoStack.Push(currentShape);
-            redoStack.Clear();
+            undoRedoManager.AddShape(currentShape);
             currentShape = null;
             currentMode = "";
             RedrawCanvas();
@@ -200,53 +274,18 @@ namespace DrawingApp
                 UIElement currentElement = currentShape.Draw();
                 DrawingCanvas.Children.Add(currentElement);
 
-                if (IsPolygonOrPolyline(currentShape) && (currentShape as dynamic).Points.Count > 0)
+                if (currentShape.IsMultiPointShape && (currentShape as dynamic).Points.Count > 0)
                 {
-                    var points = (currentShape as dynamic).Points as List<Point>;
-                    Point lastPoint = points[points.Count - 1];
+                    string strokeColorName = (ColorSelector.SelectedItem as ComboBoxItem)?.Content.ToString();
+                    Color strokeColor = ColorManager.GetColorFromName(strokeColorName);
+                    double thickness = ThicknessSlider.Value;
 
-                    Line previewLine = new Line
+                    var previewElements = currentShape.DrawPreview(previewPoint, thickness, strokeColor);
+                    foreach (var element in previewElements)
                     {
-                        X1 = lastPoint.X,
-                        Y1 = lastPoint.Y,
-                        X2 = previewPoint.X,
-                        Y2 = previewPoint.Y,
-                        Stroke = new SolidColorBrush(GetColorFromName((ColorSelector.SelectedItem as ComboBoxItem)?.Content.ToString())),
-                        StrokeThickness = ThicknessSlider.Value,
-                        StrokeDashArray = new DoubleCollection { 4, 4 }
-                    };
-                    DrawingCanvas.Children.Add(previewLine);
-
-                    if (currentShape is PolygonShape && points.Count > 1)
-                    {
-                        PolygonShape previewPolygon = new PolygonShape();
-                        foreach (var point in points)
-                        {
-                            previewPolygon.Points.Add(point);
-                        }
-                        previewPolygon.Points.Add(previewPoint);
-                        SetShapeProperties(previewPolygon);
-
-                        UIElement previewElement = previewPolygon.Draw();
-                        if (previewElement is System.Windows.Shapes.Polygon polygon)
-                        {
-                            polygon.Opacity = 0.5;
-                        }
-                        DrawingCanvas.Children.Add(previewElement);
+                        DrawingCanvas.Children.Add(element);
                     }
                 }
-            }
-        }
-
-        private Color GetColorFromName(string colorName)
-        {
-            switch (colorName)
-            {
-                case "Red": return Colors.Red;
-                case "Blue": return Colors.Blue;
-                case "Green": return Colors.Green;
-                case "Black": return Colors.Black;
-                default: return Colors.Black;
             }
         }
 
@@ -260,55 +299,14 @@ namespace DrawingApp
                 return;
             }
 
-            if (undoStack.Count > 0)
-            {
-                Shape shape = undoStack.Pop();
-                shapes.Remove(shape);
-                redoStack.Push(shape);
-                RedrawCanvas();
-            }
+            undoRedoManager.Undo();
+            RedrawCanvas();
         }
 
         private void RedoButton_Click(object sender, RoutedEventArgs e)
         {
-            if (redoStack.Count > 0)
-            {
-                Shape shape = redoStack.Pop();
-                shapes.Add(shape);
-                undoStack.Push(shape);
-                RedrawCanvas();
-            }
-        }
-
-        private bool IsPolygonOrPolyline(Shape shape)
-        {
-            return shape is PolygonShape || shape is PolylineShape;
-        }
-    }
-
-    public static class ShapeFactory
-    {
-        private static readonly Dictionary<string, Func<Shape>> shapeCreators = new Dictionary<string, Func<Shape>>
-        {
-            { "Line", () => new LineShape() },
-            { "Rectangle", () => new RectangleShape() },
-            { "Ellipse", () => new EllipseShape() },
-            { "Polygon", () => new PolygonShape() },
-            { "Polyline", () => new PolylineShape() }
-        };
-
-        public static Shape CreateShape(string shapeName)
-        {
-            if (string.IsNullOrEmpty(shapeName))
-            {
-                throw new ArgumentException("Название фигуры не может быть пустым или null.");
-            }
-
-            if (shapeCreators.TryGetValue(shapeName, out var creator))
-            {
-                return creator();
-            }
-            throw new ArgumentException($"Неизвестный тип фигуры: {shapeName}");
+            undoRedoManager.Redo();
+            RedrawCanvas();
         }
     }
 }

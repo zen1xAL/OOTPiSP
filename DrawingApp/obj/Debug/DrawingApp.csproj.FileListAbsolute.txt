@@ -1,0 +1,14 @@
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\bin\Debug\DrawingApp.exe.config
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\bin\Debug\DrawingApp.exe
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\bin\Debug\DrawingApp.pdb
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\DrawingApp.csproj.AssemblyReference.cache
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\MainWindow.baml
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\MainWindow.g.cs
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\App.g.cs
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\DrawingApp_MarkupCompile.cache
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\DrawingApp.g.resources
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\DrawingApp.Properties.Resources.resources
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\DrawingApp.csproj.GenerateResource.cache
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\DrawingApp.csproj.CoreCompileInputs.cache
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\DrawingApp.exe
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\obj\Debug\DrawingApp.pdb

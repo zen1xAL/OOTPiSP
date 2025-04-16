@@ -1,0 +1,10 @@
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\bin\Debug\ShapePlugin.dll
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\bin\Debug\ShapePlugin.pdb
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\bin\Debug\DrawingApp.exe
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\bin\Debug\DrawingApp.pdb
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\bin\Debug\DrawingApp.exe.config
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\obj\Debug\ShapePlugin.csproj.AssemblyReference.cache
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\obj\Debug\ShapePlugin.csproj.CoreCompileInputs.cache
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\obj\Debug\ShapePlu.FC3D8D6C.Up2Date
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\obj\Debug\ShapePlugin.dll
+D:\MyProjects\OOTPiSP\DrawingApp\DrawingApp\ShapePlugin\obj\Debug\ShapePlugin.pdb

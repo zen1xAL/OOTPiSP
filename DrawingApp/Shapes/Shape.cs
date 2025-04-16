@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using System.Windows.Media;
+﻿using System.Collections.Generic;
 using System.Windows;
+using System.Windows.Media;
 
 namespace DrawingApp
 {
@@ -21,5 +17,12 @@ namespace DrawingApp
             StrokeColor = strokeColor;
             FillColor = fillColor;
         }
+
+        public abstract void Initialize(Point startPoint);
+        public abstract void Update(Point currentPoint);
+        public abstract void FinalizeShape();
+        public abstract bool IsMultiPointShape { get; }
+
+        public abstract IEnumerable<UIElement> DrawPreview(Point previewPoint, double thickness, Color strokeColor);
     }
 }
