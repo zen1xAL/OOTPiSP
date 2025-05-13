@@ -2,6 +2,7 @@
 using System.Windows.Media;
 using System.Windows.Shapes;
 using System.Windows;
+using Newtonsoft.Json.Linq;
 
 namespace DrawingApp
 {
@@ -12,14 +13,6 @@ namespace DrawingApp
         public override void Initialize(Point startPoint)
         {
             Points.Add(startPoint);
-        }
-
-        public override void Update(Point currentPoint)
-        {
-        }
-
-        public override void FinalizeShape()
-        {
         }
 
         public override UIElement Draw()
@@ -41,7 +34,6 @@ namespace DrawingApp
             var elements = new List<UIElement>();
             Point lastPoint = Points[Points.Count - 1];
 
-            // Рисуем пунктирную линию от последней точки до текущей позиции мыши
             Line previewLine = new Line
             {
                 X1 = lastPoint.X,
@@ -55,6 +47,28 @@ namespace DrawingApp
             elements.Add(previewLine);
 
             return elements;
+        }
+
+        public override Dictionary<string, object> GetSerializationData()
+        {
+            var data = base.GetSerializationData();
+            
+            data.Add("Points", Points);
+            return data;
+        }
+
+        public override void SetSerializationData(Dictionary<string, object> data)
+        {
+            Thickness = (double)data["Thickness"];
+            StrokeColor = (Color)ColorConverter.ConvertFromString((string)data["StrokeColor"]);
+            FillColor = (Color)ColorConverter.ConvertFromString((string)data["FillColor"]);
+
+            Points = new List<Point>();
+            var pointsArray = (JArray)data["Points"];
+            foreach (var pointToken in pointsArray)
+            {
+                Points.Add(Point.Parse(pointToken.ToString()));
+            }
         }
     }
 }

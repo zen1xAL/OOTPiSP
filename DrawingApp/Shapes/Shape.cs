@@ -19,10 +19,31 @@ namespace DrawingApp
         }
 
         public abstract void Initialize(Point startPoint);
-        public abstract void Update(Point currentPoint);
-        public abstract void FinalizeShape();
+        public virtual void Update(Point currentPoint)
+        {
+        }
+
+        public virtual void FinalizeShape()
+        {
+        }
+
         public abstract bool IsMultiPointShape { get; }
 
-        public abstract IEnumerable<UIElement> DrawPreview(Point previewPoint, double thickness, Color strokeColor);
+        public virtual IEnumerable<UIElement> DrawPreview(Point previewPoint, double thickness, Color strokeColor)
+        {
+            return new List<UIElement>();
+        }
+
+        public virtual Dictionary<string, object> GetSerializationData()
+        {
+            return new Dictionary<string, object>
+            {
+                { "Thickness", Thickness },
+                { "StrokeColor", StrokeColor.ToString() },
+                { "FillColor", FillColor.ToString() }
+            };
+        }
+
+        public abstract void SetSerializationData(Dictionary<string, object> data);
     }
 }

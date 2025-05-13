@@ -10,6 +10,8 @@ namespace DrawingApp
     {
         private static readonly Dictionary<string, Type> shapeTypes = new Dictionary<string, Type>();
 
+        public static event EventHandler<string> ShapeRegistered;
+
         public static void RegisterShape(string shapeName, Type shapeType)
         {
             if (string.IsNullOrEmpty(shapeName))
@@ -26,6 +28,7 @@ namespace DrawingApp
             }
 
             shapeTypes[shapeName] = shapeType;
+            ShapeRegistered?.Invoke(null, shapeName);
         }
 
         public static Shape CreateShape(string shapeName, params object[] parameters)
@@ -88,53 +91,51 @@ namespace DrawingApp
             return !string.IsNullOrEmpty(shapeName) && shapeTypes.ContainsKey(shapeName);
         }
 
-        public static void LoadPlugins(string pluginsDirectory)
+        public static void LoadPluginFromFile(string dllPath)
         {
-            if (string.IsNullOrEmpty(pluginsDirectory))
+            if (string.IsNullOrEmpty(dllPath))
             {
-                throw new ArgumentException("Путь к директории плагинов не может быть пустым.", nameof(pluginsDirectory));
+                throw new ArgumentException("Путь к DLL не может быть пустым.", nameof(dllPath));
             }
 
-            if (!Directory.Exists(pluginsDirectory))
+            if (!File.Exists(dllPath))
             {
-                Directory.CreateDirectory(pluginsDirectory);
-                Console.WriteLine($"Директория {pluginsDirectory} создана, плагины отсутствуют.");
-                return;
+                throw new FileNotFoundException($"Файл {dllPath} не найден.");
             }
 
-            var dllFiles = Directory.GetFiles(pluginsDirectory, "*.dll");
-            Console.WriteLine($"Найдено {dllFiles.Length} DLL-файлов в {pluginsDirectory}: {string.Join(", ", dllFiles)}");
-
-            foreach (var dllPath in dllFiles)
+            try
             {
-                try
+                Console.WriteLine($"Попытка загрузить плагин: {dllPath}");
+                Assembly assembly = Assembly.LoadFrom(dllPath);
+                var shapeClasses = assembly.GetTypes()
+                    .Where(t => typeof(Shape).IsAssignableFrom(t) && !t.IsAbstract && t.IsClass);
+
+                var shapeClassList = shapeClasses.ToList();
+                Console.WriteLine($"Найдено {shapeClassList.Count} классов, унаследованных от Shape, в {dllPath}: {string.Join(", ", shapeClassList.Select(t => t.FullName))}");
+
+                foreach (var shapeType in shapeClassList)
                 {
-                    Console.WriteLine($"Попытка загрузить плагин: {dllPath}");
-                    Assembly assembly = Assembly.LoadFrom(dllPath);
-                    var shapeClasses = assembly.GetTypes()
-                        .Where(t => typeof(Shape).IsAssignableFrom(t) && !t.IsAbstract && t.IsClass);
-
-                    var shapeClassList = shapeClasses.ToList();
-                    Console.WriteLine($"Найдено {shapeClassList.Count} классов, унаследованных от Shape, в {dllPath}: {string.Join(", ", shapeClassList.Select(t => t.FullName))}");
-
-                    foreach (var shapeType in shapeClassList)
+                    string shapeName = shapeType.Name.Replace("Shape", "");
+                    if (ShapeFactory.IsShapeRegistered(shapeName))
                     {
-                        string shapeName = shapeType.Name.Replace("Shape", "");
-                        Console.WriteLine($"Регистрируем фигуру: {shapeName} (тип: {shapeType.FullName})");
-                        RegisterShape(shapeName, shapeType);
+                        Console.WriteLine($"Фигура {shapeName} уже зарегистрирована, пропускаем.");
+                        continue;
+                    }
+                    Console.WriteLine($"Регистрируем фигуру: {shapeName} (тип: {shapeType.FullName})");
+                    RegisterShape(shapeName, shapeType);
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при загрузке плагина {dllPath}: {ex.Message}");
+                if (ex is ReflectionTypeLoadException reflectionEx)
+                {
+                    foreach (var loaderEx in reflectionEx.LoaderExceptions)
+                    {
+                        Console.WriteLine($"LoaderException: {loaderEx.Message}");
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine($"Ошибка при загрузке плагина {dllPath}: {ex.Message}");
-                    if (ex is ReflectionTypeLoadException reflectionEx)
-                    {
-                        foreach (var loaderEx in reflectionEx.LoaderExceptions)
-                        {
-                            Console.WriteLine($"LoaderException: {loaderEx.Message}");
-                        }
-                    }
-                }
+                throw;
             }
         }
 

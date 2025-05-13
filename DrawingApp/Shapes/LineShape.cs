@@ -2,6 +2,7 @@
 using System.Windows.Shapes;
 using System.Windows;
 using System.Collections.Generic;
+using System.Globalization;
 
 namespace DrawingApp
 {
@@ -21,10 +22,6 @@ namespace DrawingApp
             End = currentPoint;
         }
 
-        public override void FinalizeShape()
-        {
-        }
-
         public override UIElement Draw()
         {
             return new Line
@@ -40,9 +37,21 @@ namespace DrawingApp
 
         public override bool IsMultiPointShape => false;
 
-        public override IEnumerable<UIElement> DrawPreview(Point previewPoint, double thickness, Color strokeColor)
+        public override Dictionary<string, object> GetSerializationData()
         {
-            return new List<UIElement>(); // Линии не нужен предпросмотр
+            var data = base.GetSerializationData();
+            data.Add("Start", Start);
+            data.Add("End", End);
+            return data;
+        }
+
+        public override void SetSerializationData(Dictionary<string, object> data)
+        {
+            Thickness = (double)data["Thickness"];
+            StrokeColor = (Color)ColorConverter.ConvertFromString((string)data["StrokeColor"]);
+            FillColor = (Color)ColorConverter.ConvertFromString((string)data["FillColor"]);
+            Start = Point.Parse((string)data["Start"]);
+            End = Point.Parse((string)data["End"]);
         }
     }
 }

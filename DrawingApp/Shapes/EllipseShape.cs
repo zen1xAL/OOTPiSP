@@ -23,10 +23,6 @@ namespace DrawingApp
             BottomRight = currentPoint;
         }
 
-        public override void FinalizeShape()
-        {
-        }
-
         public override UIElement Draw()
         {
             double left = Math.Min(TopLeft.X, BottomRight.X);
@@ -49,9 +45,21 @@ namespace DrawingApp
 
         public override bool IsMultiPointShape => false;
 
-        public override IEnumerable<UIElement> DrawPreview(Point previewPoint, double thickness, Color strokeColor)
+        public override Dictionary<string, object> GetSerializationData()
         {
-            return new List<UIElement>(); // Эллипсу не нужен предпросмотр
+            var data = base.GetSerializationData();
+            data.Add("TopLeft", TopLeft);
+            data.Add("BottomRight", BottomRight);
+            return data;
+        }
+
+        public override void SetSerializationData(Dictionary<string, object> data)
+        {
+            Thickness = (double)data["Thickness"];
+            StrokeColor = (Color)ColorConverter.ConvertFromString((string)data["StrokeColor"]);
+            FillColor = (Color)ColorConverter.ConvertFromString((string)data["FillColor"]);
+            TopLeft = Point.Parse((string)data["TopLeft"]);
+            BottomRight = Point.Parse((string)data["BottomRight"]);
         }
     }
 }

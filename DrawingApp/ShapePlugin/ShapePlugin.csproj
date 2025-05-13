@@ -46,7 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TriangleShape.cs" />
+    <Compile Include="TrapezoidShape.cs" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\DrawingApp.csproj">
