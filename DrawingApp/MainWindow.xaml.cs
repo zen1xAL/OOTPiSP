@@ -188,24 +188,17 @@ namespace DrawingApp
 
         private void DrawingCanvas_MouseUp(object sender, MouseButtonEventArgs e)
         {
-            if (e.ChangedButton == MouseButton.Left && DrawingCanvas.IsMouseCaptured)
-            {
-                DrawingCanvas.ReleaseMouseCapture();
-
-                if (isDrawing && currentShape != null && !currentShape.IsMultiPointShape)
-                {
-                    currentShape.Update(e.GetPosition(DrawingCanvas));
-                    currentShape.FinalizeShape();
-                    FinalizeShape();
-                    isDrawing = false;
-                }
-            }
-            else if (e.ChangedButton == MouseButton.Left && isDrawing && currentShape != null && !currentShape.IsMultiPointShape)
+            if (e.ChangedButton == MouseButton.Left && isDrawing && currentShape != null && !currentShape.IsMultiPointShape)
             {
                 currentShape.Update(e.GetPosition(DrawingCanvas));
                 currentShape.FinalizeShape();
                 FinalizeShape();
                 isDrawing = false;
+
+                if (DrawingCanvas.IsMouseCaptured)
+                {
+                    DrawingCanvas.ReleaseMouseCapture();
+                }
             }
         }
 
@@ -213,12 +206,7 @@ namespace DrawingApp
         {
             if (isDrawing && currentShape != null && currentShape.IsMultiPointShape)
             {
-                bool canFinalize = true;
-
-                if (currentShape is PolylineShape poly && poly.Points.Count < 2)
-                {
-                    canFinalize = false;
-                }
+                bool canFinalize = !(currentShape is PolylineShape poly && poly.Points.Count < 2);
 
                 if (canFinalize)
                 {
