@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Windows.Media;
 
@@ -19,13 +19,14 @@ namespace DrawingApp
         {
             if (string.IsNullOrEmpty(colorName))
             {
-                return Colors.Black; // Цвет по умолчанию
+			// default color
+                return Colors.Black;
             }
 
             return colorMap.TryGetValue(colorName, out Color color) ? color : Colors.Black;
         }
 
-        // Метод для добавления новых цветов (для расширяемости)
+        // add new colors
         public static void RegisterColor(string name, Color color)
         {
             if (!string.IsNullOrEmpty(name) && !colorMap.ContainsKey(name))
