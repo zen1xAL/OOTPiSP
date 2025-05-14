@@ -322,10 +322,10 @@ namespace DrawingApp
             {
                 ShapeSerializer serializer = new ShapeSerializer();
 
-                // clear old list
+                
                 shapes.Clear();
 
-                // load and add figures from json
+                
                 var loadedShapes = serializer.LoadShapes(openFileDialog.FileName);
                 shapes.AddRange(loadedShapes);
 

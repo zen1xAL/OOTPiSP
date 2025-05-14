@@ -19,14 +19,14 @@ namespace DrawingApp
         {
             if (string.IsNullOrEmpty(colorName))
             {
-			// default color
+			
                 return Colors.Black;
             }
 
             return colorMap.TryGetValue(colorName, out Color color) ? color : Colors.Black;
         }
 
-        // add new colors
+       
         public static void RegisterColor(string name, Color color)
         {
             if (!string.IsNullOrEmpty(name) && !colorMap.ContainsKey(name))

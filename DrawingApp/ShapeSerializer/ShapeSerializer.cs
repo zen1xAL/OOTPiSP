@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Reflection;
+using System.Windows;
 
 namespace DrawingApp
 {
@@ -58,7 +59,8 @@ namespace DrawingApp
 
                 if (shapeType == null)
                 {
-                    throw new Exception($"Неизвестный тип фигуры: {typeName}");
+                    MessageBox.Show("Неизвестный тип фигуры!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Information);
+                    break;
                 }
 
                 Shape shape = (Shape)Activator.CreateInstance(shapeType);

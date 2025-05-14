@@ -14,7 +14,6 @@ namespace DrawingApp
             this.shapes = shapes ?? throw new ArgumentNullException(nameof(shapes));
         }
 
-        // add shape into undostack
         public void AddShape(Shape shape)
         {
             if (shape == null) throw new ArgumentNullException(nameof(shape));
@@ -43,12 +42,6 @@ namespace DrawingApp
                 undoStack.Push(shape);
             }
         }
-
-       
-        //public bool CanUndo => undoStack.Count > 0;
-
-        
-        //public bool CanRedo => redoStack.Count > 0;
 
         public void Reset()
         {
