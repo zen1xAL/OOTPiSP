@@ -206,10 +206,7 @@ namespace DrawingApp
         {
             if (isDrawing && currentShape != null && currentShape.IsMultiPointShape)
             {
-                bool canFinalize = !(currentShape is PolylineShape poly && poly.Points.Count < 2);
-
-                if (canFinalize)
-                {
+                 
                     currentShape.FinalizeShape();
                     FinalizeShape();
                     isDrawing = false;
@@ -218,7 +215,6 @@ namespace DrawingApp
                     {
                         DrawingCanvas.ReleaseMouseCapture();
                     }
-                }
             }
         }
 
@@ -311,7 +307,7 @@ namespace DrawingApp
         {
             Microsoft.Win32.SaveFileDialog saveFileDialog = new Microsoft.Win32.SaveFileDialog();
             saveFileDialog.Filter = "JSON files (*.json)|*.json";
-            if (saveFileDialog.ShowDialog() == true)
+            if (saveFileDialog.ShowDialog().GetValueOrDefault())
             {
                 ShapeSerializer serializer = new ShapeSerializer();
                 serializer.SaveShapes(shapes, saveFileDialog.FileName);
@@ -322,7 +318,7 @@ namespace DrawingApp
         {
             Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog();
             openFileDialog.Filter = "JSON files (*.json)|*.json";
-            if (openFileDialog.ShowDialog() == true)
+            if (openFileDialog.ShowDialog().GetValueOrDefault())
             {
                 ShapeSerializer serializer = new ShapeSerializer();
 

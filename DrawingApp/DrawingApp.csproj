@@ -67,7 +67,7 @@
     <Compile Include="Shapes\RectangleShape.cs" />
     <Compile Include="Shapes\Shape.cs" />
     <Compile Include="ShapeFactory\ShapeFactory.cs" />
-    <Compile Include="Undo_Redo\UndoRedoManager.cs" />
+    <Compile Include="UndoRedo\UndoRedoManager.cs" />
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
