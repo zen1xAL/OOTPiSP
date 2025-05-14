@@ -60,7 +60,7 @@ namespace DrawingApp
                 if (shapeType == null)
                 {
                     MessageBox.Show("Неизвестный тип фигуры!", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Information);
-                    break;
+                    continue;
                 }
 
                 Shape shape = (Shape)Activator.CreateInstance(shapeType);
